@@ -9,9 +9,9 @@ pub struct Pref {
     pub size: u32,
     pub iterations: u32,
     pub seed: Option<u64>,
-    pub front_prop: f64,
-    pub max_forks: u64,
-    pub min_forks: u64,
+    pub front_prop: f32,
+    pub max_forks: u32,
+    pub min_forks: u32,
 }
 
 #[derive(Debug)]
@@ -61,7 +61,7 @@ fn generate_tree(args: &Pref) -> Result<Dag<(), (), u32>, Error> {
     queue.push_back(0);
 
     while !queue.is_empty() {
-        let front_prop: f64 = rng.gen();
+        let front_prop: f32 = rng.gen();
 
         let current = if front_prop < args.front_prop {
             queue.pop_front().unwrap()

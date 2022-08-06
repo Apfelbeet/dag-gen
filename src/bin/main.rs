@@ -16,13 +16,13 @@ pub struct Args {
     seed: Option<u64>,
 
     #[clap(long, value_parser, default_value_t = 0.25)]
-    front_prop: f64,
+    front_prop: f32,
 
     #[clap(long, value_parser, default_value_t = 4)]
-    max_forks: u64,
+    max_forks: u32,
 
     #[clap(long, value_parser, default_value_t = 1)]
-    min_forks: u64,
+    min_forks: u32,
 }
 
 impl Into<Pref> for Args {
