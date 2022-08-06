@@ -14,18 +14,23 @@ pub struct Pref {
     pub min_forks: u64,
 }
 
-pub fn generate_dag(pref: &Pref) -> Dag<(), ()> {
-    let mut akk = generate_tree(&pref);
-
-    for _ in 0..pref.iterations {
-        let tree = generate_tree(&pref);
-        akk = merge_dags(&akk, &tree);
-    }
-
-    return akk;
+#[derive(Debug)]
+pub enum Error {
+    InternalError(String),
 }
 
-fn merge_dags(dag1: &Dag<(), ()>, dag2: &Dag<(), ()>) -> Dag<(), ()> {
+pub fn generate_dag(pref: &Pref) -> Result<Dag<(), ()>, Error> {
+    let mut akk = generate_tree(&pref)?;
+
+    for _ in 0..pref.iterations {
+        let tree = generate_tree(&pref)?;
+        akk = merge_dags(&akk, &tree)?;
+    }
+
+    Ok(akk)
+}
+
+fn merge_dags(dag1: &Dag<(), ()>, dag2: &Dag<(), ()>) -> Result<Dag<(), ()>, Error> {
     let mut dag = dag1.clone();
     let edges = dag2.raw_edges().to_owned();
     let transformed_edges = edges
@@ -33,15 +38,14 @@ fn merge_dags(dag1: &Dag<(), ()>, dag2: &Dag<(), ()>) -> Dag<(), ()> {
         .map(|edge| (edge.source(), edge.target(), edge.weight))
         .filter(|edge| dag1.find_edge(edge.0, edge.1) == Option::None);
 
-    match dag.extend_with_edges(transformed_edges) {
-        Ok(_) => {}
-        Err(_) => panic!("Couldn't merge generated trees!"),
+    if let Err(_) = dag.extend_with_edges(transformed_edges) {
+        return Err(Error::InternalError("Couldn't merge generated trees!".to_string()));
     }
 
-    return dag;
+    Ok(dag)
 }
 
-fn generate_tree(args: &Pref) -> Dag<(), (), u32> {
+fn generate_tree(args: &Pref) -> Result<Dag<(), (), u32>, Error> {
     let size = args.size as usize;
     let mut tree = Dag::with_capacity(size, size - 1);
 
@@ -71,8 +75,10 @@ fn generate_tree(args: &Pref) -> Dag<(), (), u32> {
         );
 
         for _ in 0..amount_forks {
-            tree.add_edge(NodeIndex::new(current), NodeIndex::new(next), ())
-                .expect("Can't add edge to tree!");
+            if let Err(_) = tree.add_edge(NodeIndex::new(current), NodeIndex::new(next), ()) {
+                return Err(Error::InternalError("Can't add edge to tree!".to_string()));
+            }
+            
             queue.push_back(next);
             next += 1;
         }
@@ -82,7 +88,7 @@ fn generate_tree(args: &Pref) -> Dag<(), (), u32> {
         }
     }
 
-    return tree;
+    Ok(tree)
 }
 
 fn get_random_generator(args: &Pref) -> ChaCha20Rng {

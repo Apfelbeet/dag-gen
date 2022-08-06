@@ -40,11 +40,8 @@ impl Into<Pref> for Args {
 
 fn main() {
     let args = Args::parse();
-    let dag = generate_dag(&args.into());
+    let dag = generate_dag(&args.into()).unwrap();
 
-    println!(
-        "{:?}",
-        Dot::with_config(dag.graph(), &[Config::EdgeNoLabel, Config::NodeIndexLabel])
-    );
+    let dot_string = Dot::with_config(dag.graph(), &[Config::EdgeNoLabel, Config::NodeIndexLabel]);
+    println!("{:?}", dot_string);
 }
-
