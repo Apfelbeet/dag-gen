@@ -17,9 +17,11 @@ pub struct Pref {
 #[derive(Debug)]
 pub enum Error {
     InternalError(String),
+    PreferenceError(String),
 }
 
 pub fn generate_dag(pref: &Pref) -> Result<Dag<(), ()>, Error> {
+    validate_preferences(pref)?;
     let mut akk = generate_tree(&pref)?;
 
     for _ in 0..pref.iterations {
@@ -28,6 +30,18 @@ pub fn generate_dag(pref: &Pref) -> Result<Dag<(), ()>, Error> {
     }
 
     Ok(akk)
+}
+
+fn validate_preferences(pref: &Pref) -> Result<(), Error> {
+    if pref.front_prop < 0.0 || pref.front_prop > 1.0 {
+        return Err(Error::PreferenceError("--front-prop has to be between 0 and 1!".to_string()));
+    }
+
+    if pref.max_forks < pref.min_forks {
+        return Err(Error::PreferenceError("The maximum number of forks can not be lower than the minimum number of forks!".to_string()));
+    }
+        
+    Ok(())
 }
 
 fn merge_dags(dag1: &Dag<(), ()>, dag2: &Dag<(), ()>) -> Result<Dag<(), ()>, Error> {
