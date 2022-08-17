@@ -27,7 +27,7 @@ pub struct Args {
 
 impl Into<Pref> for Args {
     fn into(self) -> Pref {
-        return Pref {
+        Pref {
             size: self.size,
             iterations: self.iterations,
             seed: self.seed,

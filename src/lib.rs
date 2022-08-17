@@ -22,10 +22,10 @@ pub enum Error {
 
 pub fn generate_dag(pref: &Pref) -> Result<Dag<(), ()>, Error> {
     validate_preferences(pref)?;
-    let mut akk = generate_tree(&pref)?;
+    let mut akk = generate_tree(pref)?;
 
     for _ in 0..pref.iterations {
-        let tree = generate_tree(&pref)?;
+        let tree = generate_tree(pref)?;
         akk = merge_dags(&akk, &tree)?;
     }
 
@@ -52,7 +52,7 @@ fn merge_dags(dag1: &Dag<(), ()>, dag2: &Dag<(), ()>) -> Result<Dag<(), ()>, Err
         .map(|edge| (edge.source(), edge.target(), edge.weight))
         .filter(|edge| dag1.find_edge(edge.0, edge.1) == Option::None);
 
-    if let Err(_) = dag.extend_with_edges(transformed_edges) {
+    if dag.extend_with_edges(transformed_edges).is_err() {
         return Err(Error::InternalError("Couldn't merge generated trees!".to_string()));
     }
 
@@ -89,7 +89,7 @@ fn generate_tree(args: &Pref) -> Result<Dag<(), (), u32>, Error> {
         );
 
         for _ in 0..amount_forks {
-            if let Err(_) = tree.add_edge(NodeIndex::new(current), NodeIndex::new(next), ()) {
+            if tree.add_edge(NodeIndex::new(current), NodeIndex::new(next), ()).is_err() {
                 return Err(Error::InternalError("Can't add edge to tree!".to_string()));
             }
             
@@ -106,10 +106,8 @@ fn generate_tree(args: &Pref) -> Result<Dag<(), (), u32>, Error> {
 }
 
 fn get_random_generator(args: &Pref) -> ChaCha20Rng {
-    let x = match args.seed {
+    match args.seed {
         Some(seed) => ChaCha20Rng::seed_from_u64(seed),
         None => ChaCha20Rng::from_entropy(),
-    };
-
-    return x;
+    }
 }
